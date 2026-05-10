@@ -328,115 +328,154 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden relative">
         <AnimatePresence>
           {isSidebarOpen && (
-            <motion.aside initial={{ width: 0, opacity: 0 }} animate={{ width: 340, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="bg-[#F9F8F6] border-r border-black/5 flex flex-col shrink-0 overflow-y-auto">
-              <div className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-3 text-center">Generador de Posts</h3>
-                  <textarea placeholder="Describe el tema del artículo aquí..." value={topic} onChange={(e) => setTopic(e.target.value)} className="w-full bg-white border border-black/5 rounded-2xl p-4 h-32 focus:outline-none focus:ring-2 focus:ring-[#F27D26]/20 transition-all resize-none shadow-sm text-sm" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <span className="text-[9px] font-bold text-black/30 uppercase pl-1">Tono</span>
-                    <select value={tone} onChange={(e)=>setTone(e.target.value)} className="w-full bg-white border border-black/5 rounded-lg px-3 py-2 text-xs focus:outline-none shadow-sm">
-                      <option>Profesional</option><option>Casual</option><option>Creativo</option><option>Informativo</option><option>Persuasivo</option>
-                    </select>
+            <>
+              {/* Mobile Backdrop */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+              />
+              <motion.aside 
+                initial={{ x: -340, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -340, opacity: 0 }}
+                className="fixed lg:relative top-0 left-0 h-full lg:h-auto w-[300px] sm:w-[340px] bg-[#F9F8F6] border-r border-black/5 flex flex-col shrink-0 overflow-y-auto z-50 shadow-2xl lg:shadow-none"
+              >
+                <div className="p-6 space-y-6">
+                  <div className="flex justify-between items-center lg:hidden mb-2">
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-[#F27D26]">Asistente IA</span>
+                    <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-black/5 rounded-full"><X size={18}/></button>
                   </div>
-                  <div className="space-y-1.5">
-                    <span className="text-[9px] font-bold text-black/30 uppercase pl-1">Extensión</span>
-                    <select value={length} onChange={(e)=>setLength(e.target.value)} className="w-full bg-white border border-black/5 rounded-lg px-3 py-2 text-xs focus:outline-none shadow-sm">
-                      <option>Corto</option><option>Medio</option><option>Largo</option><option>Exhaustivo</option>
-                    </select>
+                  <div>
+                    <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-3 text-center">Generador de Posts</h3>
+                    <textarea placeholder="Describe el tema del artículo aquí..." value={topic} onChange={(e) => setTopic(e.target.value)} className="w-full bg-white border border-black/5 rounded-2xl p-4 h-32 focus:outline-none focus:ring-2 focus:ring-[#F27D26]/20 transition-all resize-none shadow-sm text-sm" />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-bold text-black/30 uppercase pl-1">Tono</span>
+                      <select value={tone} onChange={(e)=>setTone(e.target.value)} className="w-full bg-white border border-black/5 rounded-lg px-3 py-2 text-xs focus:outline-none shadow-sm">
+                        <option>Profesional</option><option>Casual</option><option>Creativo</option><option>Informativo</option><option>Persuasivo</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-bold text-black/30 uppercase pl-1">Extensión</span>
+                      <select value={length} onChange={(e)=>setLength(e.target.value)} className="w-full bg-white border border-black/5 rounded-lg px-3 py-2 text-xs focus:outline-none shadow-sm">
+                        <option>Corto</option><option>Medio</option><option>Largo</option><option>Exhaustivo</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button disabled={isGenerating || !topic} onClick={generateArticle} className="w-full bg-black text-white rounded-xl py-3.5 font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#F27D26] disabled:opacity-50 transition-all shadow-xl shadow-black/10">
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    GENERAR CON IA
+                  </button>
+                  <div className="pt-6 border-t border-black/5 text-center">
+                     <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-4">Asistente IA</h3>
+                     <div className="grid grid-cols-1 gap-2">
+                        <button onClick={() => runAssistant('fix')} disabled={!content || isAssistantRunning} className="flex items-center gap-3 px-4 py-3 bg-white border border-black/5 rounded-xl hover:border-[#F27D26] hover:text-[#F27D26] transition-all text-xs font-medium disabled:opacity-40"><SpellCheck className="w-4 h-4" /> Corregir Ortografía</button>
+                        <button onClick={() => runAssistant('extend')} disabled={!content || isAssistantRunning} className="flex items-center gap-3 px-4 py-3 bg-white border border-black/5 rounded-xl hover:border-[#F27D26] hover:text-[#F27D26] transition-all text-xs font-medium disabled:opacity-40"><Zap className="w-4 h-4" /> Sugerir continuación</button>
+                     </div>
+                  </div>
+                  <div className="pt-6 border-t border-black/5"><div className="p-4 bg-[#F27D26]/5 rounded-xl border border-[#F27D26]/10 text-[10px] leading-relaxed text-[#F27D26]">Idiomas: El artículo se generará en <strong>{settings.language}</strong>. Puedes cambiarlo en configuración.</div></div>
                 </div>
-                <button disabled={isGenerating || !topic} onClick={generateArticle} className="w-full bg-black text-white rounded-xl py-3.5 font-bold text-xs flex items-center justify-center gap-2 hover:bg-[#F27D26] disabled:opacity-50 transition-all shadow-xl shadow-black/10">
-                  {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  GENERAR CON IA
-                </button>
-                <div className="pt-6 border-t border-black/5 text-center">
-                   <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-4">Asistente IA</h3>
-                   <div className="grid grid-cols-1 gap-2">
-                      <button onClick={() => runAssistant('fix')} disabled={!content || isAssistantRunning} className="flex items-center gap-3 px-4 py-3 bg-white border border-black/5 rounded-xl hover:border-[#F27D26] hover:text-[#F27D26] transition-all text-xs font-medium disabled:opacity-40"><SpellCheck className="w-4 h-4" /> Corregir Ortografía</button>
-                      <button onClick={() => runAssistant('extend')} disabled={!content || isAssistantRunning} className="flex items-center gap-3 px-4 py-3 bg-white border border-black/5 rounded-xl hover:border-[#F27D26] hover:text-[#F27D26] transition-all text-xs font-medium disabled:opacity-40"><Zap className="w-4 h-4" /> Sugerir continuación</button>
-                   </div>
-                </div>
-                <div className="pt-6 border-t border-black/5"><div className="p-4 bg-[#F27D26]/5 rounded-xl border border-[#F27D26]/10 text-[10px] leading-relaxed text-[#F27D26]">Idiomas: El artículo se generará en <strong>{settings.language}</strong>. Puedes cambiarlo en configuración.</div></div>
-              </div>
-            </motion.aside>
+              </motion.aside>
+            </>
           )}
         </AnimatePresence>
 
         <main className="flex-1 flex flex-col bg-white relative">
-          <div className="h-14 border-b border-black/5 flex items-center justify-between px-4 bg-white shrink-0 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="flex gap-1 p-1 bg-black/5 rounded-lg mr-2 shrink-0">
-                <button onClick={() => setViewMode('visual')} className={`px-3 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'visual' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>VISUAL</button>
-                <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'code' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>HTML</button>
-                <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded-md text-[9px] font-bold transition-all ${viewMode === 'preview' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>VISTA PREVIA</button>
+          <div className="h-14 border-b border-black/5 bg-white shrink-0 overflow-x-auto no-scrollbar scroll-smooth">
+            <div className="flex items-center h-full px-4 min-w-max gap-1">
+              <div className="flex gap-0.5 p-1 bg-black/5 rounded-lg mr-2">
+                <button onClick={() => setViewMode('visual')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'visual' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>VISUAL</button>
+                <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'code' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>HTML</button>
+                <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'preview' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>PREVIA</button>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5">
-                <button onClick={() => insertTag('strong')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Negrita"><Bold size={15}/></button>
-                <button onClick={() => insertTag('em')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Cursiva"><Italic size={15}/></button>
-                <button onClick={() => insertTag('u')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Subrayado"><Underline size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+                <button onClick={() => insertTag('strong')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Negrita"><Bold size={16}/></button>
+                <button onClick={() => insertTag('em')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Cursiva"><Italic size={16}/></button>
+                <button onClick={() => insertTag('u')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Subrayado"><Underline size={16}/></button>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5">
-                <button onClick={() => insertTag('h1')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="H1"><Heading1 size={15}/></button>
-                <button onClick={() => insertTag('h2')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="H2"><Heading2 size={15}/></button>
-                <button onClick={() => insertTag('h3')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="H3"><Heading3 size={15}/></button>
-                <button onClick={() => insertTag('h4')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="H4"><Heading4 size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5 text-[10px] font-bold text-black/20">
+                <button onClick={() => insertTag('h1')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H1">H1</button>
+                <button onClick={() => insertTag('h2')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H2">H2</button>
+                <button onClick={() => insertTag('h3')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H3">H3</button>
+                <button onClick={() => insertTag('h4')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H4">H4</button>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5 relative">
-                 <button onClick={() => setShowColorPicker(showColorPicker === 'text' ? null : 'text')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Color de Texto"><Palette size={15}/></button>
-                 <button onClick={() => setShowColorPicker(showColorPicker === 'bg' ? null : 'bg')} className="p-1.5 hover:bg-black/5 rounded-md text-black/40" title="Fondo"><Palette size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5 relative">
+                 <button onClick={() => setShowColorPicker(showColorPicker === 'text' ? null : 'text')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Color de Texto">
+                    <Palette size={16} style={{ color: showColorPicker === 'text' ? '#F27D26' : 'inherit' }} />
+                 </button>
+                 <button onClick={() => setShowColorPicker(showColorPicker === 'bg' ? null : 'bg')} className="p-2 hover:bg-black/5 rounded-md text-black/30" title="Fondo">
+                    <Palette size={16} className="opacity-50" />
+                 </button>
                  {showColorPicker && (
-                   <div className="absolute top-full left-0 mt-2 p-3 bg-white border border-black/5 shadow-2xl rounded-xl z-[60] grid grid-cols-4 gap-2">
-                     {['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#F27D26'].map(color => (
-                       <button key={color} onClick={() => { execCommand(showColorPicker === 'text' ? 'foreColor' : 'hiliteColor', color); setShowColorPicker(null); }} className="w-5 h-5 rounded-full border border-black/5" style={{ background: color }} />
+                   <div className="absolute top-full left-0 mt-1 p-3 bg-white border border-black/10 shadow-2xl rounded-xl z-[60] grid grid-cols-5 gap-2 min-w-[200px]">
+                     {['#000000', '#444444', '#888888', '#FF0000', '#F27D26', '#FFD700', '#008000', '#0000FF', '#800080', '#FFFFFF'].map(color => (
+                       <button key={color} onClick={() => { execCommand(showColorPicker === 'text' ? 'foreColor' : 'hiliteColor', color); setShowColorPicker(null); }} className="w-6 h-6 rounded-md border border-black/5 shadow-sm" style={{ background: color }} />
                      ))}
-                     <button onClick={() => { execCommand(showColorPicker === 'text' ? 'foreColor' : 'hiliteColor', 'transparent'); setShowColorPicker(null); }} className="col-span-4 flex items-center justify-center gap-2 py-1 text-[8px] font-bold bg-black/5 rounded"><RotateCcw size={10} /> RESET</button>
+                     <button onClick={() => { execCommand(showColorPicker === 'text' ? 'foreColor' : 'hiliteColor', showColorPicker === 'text' ? '#000000' : 'transparent'); setShowColorPicker(null); }} className="col-span-5 flex items-center justify-center gap-2 py-2 text-[10px] font-bold bg-black/5 rounded-lg hover:bg-black/10"><RotateCcw size={12} /> RESTABLECER</button>
                    </div>
                  )}
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5">
-                <button onClick={() => insertTag('p-left')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Izquierda"><AlignLeft size={15}/></button>
-                <button onClick={() => insertTag('p-center')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Centro"><AlignCenter size={15}/></button>
-                <button onClick={() => insertTag('p-right')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Derecha"><AlignRight size={15}/></button>
-                <button onClick={() => insertTag('p-justify')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Justificado"><AlignJustify size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+                <button onClick={() => insertTag('p-left')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Alinear Izquierda"><AlignLeft size={16}/></button>
+                <button onClick={() => insertTag('p-center')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Centrar"><AlignCenter size={16}/></button>
+                <button onClick={() => insertTag('p-right')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Alinear Derecha"><AlignRight size={16}/></button>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5">
-                <button onClick={() => insertTag('ul')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Viñetas"><List size={15}/></button>
-                <button onClick={() => insertTag('ol')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Numeración"><ListOrdered size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+                <button onClick={() => insertTag('ul')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Lista de Viñetas"><List size={16}/></button>
+                <button onClick={() => insertTag('ol')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Lista Numerada"><ListOrdered size={16}/></button>
               </div>
-              <div className="flex items-center gap-0.5 shrink-0 px-2 border-l border-black/5">
-                <button onClick={insertTable} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Tabla"><TableIcon size={15}/></button>
-                <button onClick={() => insertTag('a', 'a', 'href="https://URL" target="_blank"')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Enlace"><Link size={15}/></button>
-                <button onClick={() => insertTag('img', '', 'src="https://URL" alt="imagen" style="width:100%; max-width:600px;"')} className="p-1.5 hover:bg-black/5 rounded-md text-black/60" title="Imagen"><Image size={15}/></button>
+
+              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+                <button onClick={insertTable} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Insertar Tabla"><TableIcon size={16}/></button>
+                <button onClick={() => {
+                  const url = prompt('Introduce la URL del enlace:', 'https://');
+                  if (url) insertTag('a', 'a', `href="${url}" target="_blank"`);
+                }} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Enlace"><Link size={16}/></button>
+                <button onClick={() => {
+                  const url = prompt('Introduce la URL de la imagen:', 'https://');
+                  if (url) insertTag('img', '', `src="${url}" alt="imagen" style="width:100%; max-width:600px; border-radius: 12px; margin: 20px 0;"`);
+                }} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Imagen"><Image size={16}/></button>
+              </div>
+
+              <div className="flex items-center px-4 border-l border-black/5 ml-auto">
+                <button onClick={() => { if(confirm('¿Borrar todo el contenido?')) setContent('') }} className="p-2 hover:bg-red-50 text-black/20 hover:text-red-500 rounded-full transition-all" title="Borrar todo">
+                  <Trash2 size={18} />
+                </button>
               </div>
             </div>
-            <button onClick={() => { if(confirm('¿Borrar todo el contenido?')) setContent('') }} className="p-2 hover:bg-red-50 text-black/20 hover:text-red-500 rounded-full transition-all shrink-0 ml-4"><Trash2 size={16} /></button>
           </div>
 
           <div className="flex-1 overflow-hidden flex bg-[#fcfcfc]">
              {viewMode === 'visual' && (
-                <div className="w-full h-full p-12 lg:p-24 overflow-y-auto bg-white flex justify-center no-scrollbar">
+                <div className="w-full h-full p-6 sm:p-8 lg:p-24 overflow-y-auto bg-white flex justify-center no-scrollbar">
                    <div className="w-full max-w-[800px] relative">
-                      {!content && <div className="absolute top-0 left-0 text-black/10 pointer-events-none prose prose-lg italic">Empieza a redactar tu historia aquí...</div>}
-                      <div ref={visualRef} contentEditable onInput={(e) => setContent(e.currentTarget.innerHTML)} className="w-full h-full outline-none prose prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-4xl prose-h1:font-black prose-h1:leading-tight prose-h1:mb-8 prose-h2:font-sans prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-p:text-[#333] prose-p:leading-relaxed min-h-full" />
+                      {!content && <div className="absolute top-0 left-0 text-black/10 pointer-events-none prose prose-sm lg:prose-lg italic">Empieza a redactar tu historia aquí...</div>}
+                      <div ref={visualRef} contentEditable onInput={(e) => setContent(e.currentTarget.innerHTML)} className="w-full h-full outline-none prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:font-black prose-h1:leading-tight prose-h1:mb-8 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-p:text-[#333] prose-p:leading-relaxed min-h-full" />
                    </div>
                 </div>
              )}
              {viewMode === 'code' && (
-                <div className="w-full h-full relative"><textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} className="absolute inset-0 w-full h-full p-12 lg:p-20 font-mono text-[11px] leading-relaxed focus:outline-none resize-none bg-transparent" placeholder="Código HTML..." spellCheck={false} /></div>
+                <div className="w-full h-full relative"><textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} className="absolute inset-0 w-full h-full p-6 lg:p-20 font-mono text-[10px] lg:text-[11px] leading-relaxed focus:outline-none resize-none bg-transparent" placeholder="Código HTML..." spellCheck={false} /></div>
              )}
              {viewMode === 'preview' && (
                 <div className="h-full overflow-y-auto w-full flex justify-center bg-white no-scrollbar">
-                   <div className={`w-full max-w-[800px] p-12 lg:p-24 transition-all duration-700 ${deviceMode === 'mobile' ? 'max-w-[375px] shadow-2xl border-x bg-white my-12 rounded-[40px] h-[750px] overflow-y-auto' : ''}`}>
+                   <div className={`w-full max-w-[800px] p-6 lg:p-24 transition-all duration-700 ${deviceMode === 'mobile' ? 'max-w-[375px] shadow-2xl border-x bg-white my-6 lg:my-12 rounded-[30px] lg:rounded-[40px]' : ''}`}>
                       <AnimatePresence mode="wait">
                         {isGenerating || isAssistantRunning ? (
-                          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="h-full flex flex-col items-center justify-center opacity-20"><Loader2 className="w-12 h-12 animate-spin mb-4" /><p className="font-mono text-[10px] tracking-widest uppercase">IA trabajando...</p></motion.div>
+                          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="h-full flex flex-col items-center justify-center opacity-20"><Loader2 className="w-10 h-10 lg:w-12 lg:h-12 animate-spin mb-4" /><p className="font-mono text-[9px] lg:text-[10px] tracking-widest uppercase">IA trabajando...</p></motion.div>
                         ) : content ? (
-                          <motion.article key="content" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="prose prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-5xl prose-h1:font-black prose-h1:leading-none prose-h1:mb-12 prose-h2:font-sans prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-12 prose-p:text-[#444] prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: content }} />
+                          <motion.article key="content" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-5xl prose-h1:font-black prose-h1:leading-none prose-h1:mb-8 lg:prose-h1:mb-12 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 lg:prose-h2:mt-12 prose-p:text-[#444] prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: content }} />
                         ) : (
-                          <div className="h-full flex flex-col items-center justify-center opacity-10 text-center"><Edit3 className="w-20 h-20 stroke-[0.5px] mb-6" /><p className="text-lg font-bold">Editor Vacío</p></div>
+                          <div className="h-full flex flex-col items-center justify-center opacity-10 text-center"><Edit3 className="w-16 h-16 lg:w-20 lg:h-20 stroke-[0.5px] mb-6" /><p className="text-lg font-bold">Editor Vacío</p></div>
                         )}
                       </AnimatePresence>
                    </div>
