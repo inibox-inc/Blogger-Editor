@@ -4,14 +4,11 @@ import {
   Sparkles, 
   Copy, 
   Check, 
-  FileCode, 
   Layout, 
   Eye, 
   Edit3, 
   Loader2,
   Trash2,
-  Monitor,
-  Smartphone,
   Settings,
   Bold,
   Italic,
@@ -26,6 +23,8 @@ import {
   Image,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   SpellCheck,
   Zap,
   X,
@@ -41,9 +40,8 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 // Types
-type ExportMode = 'html' | 'xml';
+type ExportMode = 'html';
 type ViewMode = 'visual' | 'code' | 'preview';
-type DeviceMode = 'desktop' | 'mobile';
 
 interface UserSettings {
   apiKey: string;
@@ -85,10 +83,10 @@ export default function App() {
   const [content, setContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('visual');
-  const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
   const [copyStatus, setCopyStatus] = useState<{[key: string]: boolean}>({});
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isToolbarExpanded, setIsToolbarExpanded] = useState(false);
   const [isAssistantRunning, setIsAssistantRunning] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState<'text' | 'bg' | null>(null);
 
@@ -273,14 +271,6 @@ export default function App() {
 
   const copyToClipboard = async (mode: ExportMode) => {
     let textToCopy = content;
-    if (mode === 'xml') {
-      textToCopy = `<?xml version="1.0" encoding="UTF-8"?>
-<entry xmlns="http://www.w3.org/2005/Atom">
-  <title type="text">${topic || 'Post de Blogger'}</title>
-  <content type="html">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</content>
-  <published>${new Date().toISOString()}</published>
-</entry>`;
-    }
     await navigator.clipboard.writeText(textToCopy);
     setCopyStatus({ ...copyStatus, [mode]: true });
     setTimeout(() => setCopyStatus({ ...copyStatus, [mode]: false }), 2000);
@@ -288,39 +278,22 @@ export default function App() {
 
   return (
     <div className="h-screen bg-[#FDFCFB] flex flex-col overflow-hidden text-[#1A1A1A]">
-      <header className="h-14 border-b border-black/5 bg-white flex items-center justify-between px-6 shrink-0 z-50">
+      <header className="h-14 border-b border-black/5 bg-white flex items-center justify-between px-4 lg:px-6 shrink-0 z-50">
         <div className="flex items-center gap-3">
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
-            {isSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 hover:bg-black/5 rounded-full transition-colors"
+          >
+            {isSidebarOpen ? <X size={20} /> : <ChevronRight size={20} />}
           </button>
-          <div className="flex items-center gap-2">
-            <Layout className="w-5 h-5 text-[#F27D26]" />
-            <span className="font-bold tracking-tight text-sm uppercase">Blogger <span className="font-light">Editor</span></span>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex p-1 bg-black/5 rounded-full mr-4">
-            <button onClick={() => setDeviceMode('desktop')} className={`p-1.5 rounded-full transition-all ${deviceMode === 'desktop' ? 'bg-white shadow-sm' : 'opacity-40'}`}>
-              <Monitor className="w-3.5 h-3.5" />
-            </button>
-            <button onClick={() => setDeviceMode('mobile')} className={`p-1.5 rounded-full transition-all ${deviceMode === 'mobile' ? 'bg-white shadow-sm' : 'opacity-40'}`}>
-              <Smartphone className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <button onClick={() => setIsSettingsOpen(true)} className="p-2 hover:bg-black/5 rounded-full transition-colors text-black/40 mr-2">
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 hover:bg-black/5 rounded-full transition-colors text-black/40"
+          >
             <Settings className="w-5 h-5" />
-          </button>
-          
-          <button onClick={() => copyToClipboard('html')} className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-black/10 hover:bg-black hover:text-white transition-all text-[11px] font-bold">
-            {copyStatus['html'] ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            HTML
-          </button>
-          
-          <button onClick={() => copyToClipboard('xml')} className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black text-white hover:bg-[#F27D26] transition-all text-[11px] font-bold shadow-lg shadow-black/5">
-            {copyStatus['xml'] ? <Check className="w-3.5 h-3.5" /> : <FileCode className="w-3.5 h-3.5" />}
-            XML
           </button>
         </div>
       </header>
@@ -335,19 +308,35 @@ export default function App() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+                className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
               />
               <motion.aside 
                 initial={{ x: -340, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -340, opacity: 0 }}
-                className="fixed lg:relative top-0 left-0 h-full lg:h-auto w-[300px] sm:w-[340px] bg-[#F9F8F6] border-r border-black/5 flex flex-col shrink-0 overflow-y-auto z-50 shadow-2xl lg:shadow-none"
+                className="fixed lg:relative top-0 left-0 h-full w-[280px] sm:w-[320px] bg-[#F9F8F6] border-r border-black/5 flex flex-col shrink-0 overflow-y-auto z-50 shadow-2xl lg:shadow-none"
               >
                 <div className="p-6 space-y-6">
-                  <div className="flex justify-between items-center lg:hidden mb-2">
-                    <span className="text-[10px] font-bold tracking-widest uppercase text-[#F27D26]">Asistente IA</span>
+                  <div className="flex items-center gap-2 pb-4 border-b border-black/5">
+                    <Layout className="w-5 h-5 text-[#F27D26]" />
+                    <span className="font-bold tracking-tight text-sm uppercase">Blogger <span className="font-light">Editor</span></span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-3 text-center">Acciones</h3>
+                    <button 
+                      onClick={() => copyToClipboard('html')}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-black text-white hover:bg-[#F27D26] transition-all text-xs font-bold shadow-lg shadow-black/5"
+                    >
+                      {copyStatus['html'] ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      COPIAR CÓDIGO HTML
+                    </button>
+                  </div>
+
+                  <div className="lg:hidden flex justify-end">
                     <button onClick={() => setIsSidebarOpen(false)} className="p-1 hover:bg-black/5 rounded-full"><X size={18}/></button>
                   </div>
+
                   <div>
                     <h3 className="text-[10px] font-bold tracking-[0.2em] text-black/40 uppercase mb-3 text-center">Generador de Posts</h3>
                     <textarea placeholder="Describe el tema del artículo aquí..." value={topic} onChange={(e) => setTopic(e.target.value)} className="w-full bg-white border border-black/5 rounded-2xl p-4 h-32 focus:outline-none focus:ring-2 focus:ring-[#F27D26]/20 transition-all resize-none shadow-sm text-sm" />
@@ -385,28 +374,50 @@ export default function App() {
         </AnimatePresence>
 
         <main className="flex-1 flex flex-col bg-white relative">
-          <div className="h-14 border-b border-black/5 bg-white shrink-0 overflow-x-auto no-scrollbar scroll-smooth">
-            <div className="flex items-center h-full px-4 min-w-max gap-1">
-              <div className="flex gap-0.5 p-1 bg-black/5 rounded-lg mr-2">
+          <div className={`border-b border-black/5 bg-white shrink-0 transition-all duration-300 relative z-30 ${isToolbarExpanded ? 'max-h-[300px] overflow-y-auto py-4' : 'h-14 overflow-x-auto no-scrollbar scroll-smooth'}`}>
+            <div className={`flex items-center h-full px-4 gap-1 ${isToolbarExpanded ? 'flex-wrap justify-center overflow-visible' : 'min-w-max'}`}>
+              <div className="flex items-center min-w-max gap-1 h-full">
+                {!isToolbarExpanded && (
+                  <button 
+                    onClick={() => setIsToolbarExpanded(true)}
+                    className="lg:hidden p-2 bg-black/5 rounded-full mr-2 text-black/60 hover:text-[#F27D26] transition-colors shrink-0"
+                  >
+                    <ChevronUp size={16} />
+                  </button>
+                )}
+                
+                {isToolbarExpanded && (
+                  <div className="w-full flex justify-between items-center mb-4 lg:hidden px-2">
+                    <span className="text-[10px] font-bold tracking-widest text-[#F27D26] uppercase">Herramientas</span>
+                    <button 
+                      onClick={() => setIsToolbarExpanded(false)}
+                      className="p-1.5 bg-black/5 rounded-full text-black/60"
+                    >
+                      <ChevronDown size={18} />
+                    </button>
+                  </div>
+                )}
+
+              <div className="flex gap-0.5 p-1 bg-black/5 rounded-lg mr-2 shrink-0">
                 <button onClick={() => setViewMode('visual')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'visual' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>VISUAL</button>
                 <button onClick={() => setViewMode('code')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'code' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>HTML</button>
                 <button onClick={() => setViewMode('preview')} className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${viewMode === 'preview' ? 'bg-black text-white' : 'text-black/40 hover:text-black'}`}>PREVIA</button>
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                 <button onClick={() => insertTag('strong')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Negrita"><Bold size={16}/></button>
                 <button onClick={() => insertTag('em')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Cursiva"><Italic size={16}/></button>
                 <button onClick={() => insertTag('u')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Subrayado"><Underline size={16}/></button>
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5 text-[10px] font-bold text-black/20">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 text-[10px] font-bold text-black/20 ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                 <button onClick={() => insertTag('h1')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H1">H1</button>
                 <button onClick={() => insertTag('h2')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H2">H2</button>
                 <button onClick={() => insertTag('h3')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H3">H3</button>
                 <button onClick={() => insertTag('h4')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="H4">H4</button>
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5 relative">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 relative ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                  <button onClick={() => setShowColorPicker(showColorPicker === 'text' ? null : 'text')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Color de Texto">
                     <Palette size={16} style={{ color: showColorPicker === 'text' ? '#F27D26' : 'inherit' }} />
                  </button>
@@ -414,7 +425,7 @@ export default function App() {
                     <Palette size={16} className="opacity-50" />
                  </button>
                  {showColorPicker && (
-                   <div className="absolute top-full left-0 mt-1 p-3 bg-white border border-black/10 shadow-2xl rounded-xl z-[60] grid grid-cols-5 gap-2 min-w-[200px]">
+                   <div className={`absolute left-0 mt-1 p-3 bg-white border border-black/10 shadow-2xl rounded-xl z-[60] grid grid-cols-5 gap-2 min-w-[200px] ${isToolbarExpanded ? 'bottom-full mb-1 top-auto' : 'top-full'}`}>
                      {['#000000', '#444444', '#888888', '#FF0000', '#F27D26', '#FFD700', '#008000', '#0000FF', '#800080', '#FFFFFF'].map(color => (
                        <button key={color} onClick={() => { execCommand(showColorPicker === 'text' ? 'foreColor' : 'hiliteColor', color); setShowColorPicker(null); }} className="w-6 h-6 rounded-md border border-black/5 shadow-sm" style={{ background: color }} />
                      ))}
@@ -423,18 +434,18 @@ export default function App() {
                  )}
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                 <button onClick={() => insertTag('p-left')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Alinear Izquierda"><AlignLeft size={16}/></button>
                 <button onClick={() => insertTag('p-center')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Centrar"><AlignCenter size={16}/></button>
                 <button onClick={() => insertTag('p-right')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Alinear Derecha"><AlignRight size={16}/></button>
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                 <button onClick={() => insertTag('ul')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Lista de Viñetas"><List size={16}/></button>
                 <button onClick={() => insertTag('ol')} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Lista Numerada"><ListOrdered size={16}/></button>
               </div>
 
-              <div className="flex items-center gap-0.5 px-2 border-l border-black/5">
+              <div className={`flex items-center gap-0.5 px-2 border-l border-black/5 ${isToolbarExpanded ? 'bg-black/5 rounded-xl p-1 mb-2 mx-1 border-none' : ''}`}>
                 <button onClick={insertTable} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Insertar Tabla"><TableIcon size={16}/></button>
                 <button onClick={() => {
                   const url = prompt('Introduce la URL del enlace:', 'https://');
@@ -446,20 +457,21 @@ export default function App() {
                 }} className="p-2 hover:bg-black/5 rounded-md text-black/60" title="Imagen"><Image size={16}/></button>
               </div>
 
-              <div className="flex items-center px-4 border-l border-black/5 ml-auto">
+              <div className={`flex items-center px-4 border-l border-black/5 ${isToolbarExpanded ? 'w-full justify-center pt-2 mt-2 border-t' : 'ml-auto'}`}>
                 <button onClick={() => { if(confirm('¿Borrar todo el contenido?')) setContent('') }} className="p-2 hover:bg-red-50 text-black/20 hover:text-red-500 rounded-full transition-all" title="Borrar todo">
                   <Trash2 size={18} />
                 </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex-1 overflow-hidden flex bg-[#fcfcfc]">
+        <div className="flex-1 overflow-hidden flex bg-[#fcfcfc]">
              {viewMode === 'visual' && (
                 <div className="w-full h-full p-6 sm:p-8 lg:p-24 overflow-y-auto bg-white flex justify-center no-scrollbar">
                    <div className="w-full max-w-[800px] relative">
                       {!content && <div className="absolute top-0 left-0 text-black/10 pointer-events-none prose prose-sm lg:prose-lg italic">Empieza a redactar tu historia aquí...</div>}
-                      <div ref={visualRef} contentEditable onInput={(e) => setContent(e.currentTarget.innerHTML)} className="w-full h-full outline-none prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:font-black prose-h1:leading-tight prose-h1:mb-8 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-p:text-[#333] prose-p:leading-relaxed min-h-full" />
+                      <div ref={visualRef} contentEditable onInput={(e) => setContent(e.currentTarget.innerHTML)} className="w-full h-full outline-none prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:font-black prose-h1:leading-tight prose-h1:mb-8 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-10 prose-p:text-[#333] prose-p:leading-relaxed min-h-full"></div>
                    </div>
                 </div>
              )}
@@ -467,15 +479,15 @@ export default function App() {
                 <div className="w-full h-full relative"><textarea ref={textareaRef} value={content} onChange={(e) => setContent(e.target.value)} className="absolute inset-0 w-full h-full p-6 lg:p-20 font-mono text-[10px] lg:text-[11px] leading-relaxed focus:outline-none resize-none bg-transparent" placeholder="Código HTML..." spellCheck={false} /></div>
              )}
              {viewMode === 'preview' && (
-                <div className="h-full overflow-y-auto w-full flex justify-center bg-white no-scrollbar">
-                   <div className={`w-full max-w-[800px] p-6 lg:p-24 transition-all duration-700 ${deviceMode === 'mobile' ? 'max-w-[375px] shadow-2xl border-x bg-white my-6 lg:my-12 rounded-[30px] lg:rounded-[40px]' : ''}`}>
+                <div className="h-full overflow-y-auto w-full flex justify-center bg-white no-scrollbar p-4 lg:p-0">
+                   <div className="w-full max-w-[800px] lg:p-24">
                       <AnimatePresence mode="wait">
                         {isGenerating || isAssistantRunning ? (
                           <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="h-full flex flex-col items-center justify-center opacity-20"><Loader2 className="w-10 h-10 lg:w-12 lg:h-12 animate-spin mb-4" /><p className="font-mono text-[9px] lg:text-[10px] tracking-widest uppercase">IA trabajando...</p></motion.div>
                         ) : content ? (
-                          <motion.article key="content" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-5xl prose-h1:font-black prose-h1:leading-none prose-h1:mb-8 lg:prose-h1:mb-12 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 lg:prose-h2:mt-12 prose-p:text-[#444] prose-p:leading-relaxed" dangerouslySetInnerHTML={{ __html: content }} />
+                          <motion.article key="content" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="prose prose-sm lg:prose-lg prose-slate max-w-none prose-h1:font-display prose-h1:text-3xl lg:prose-h1:text-5xl prose-h1:font-black prose-h1:leading-none prose-h1:mb-8 lg:prose-h1:mb-12 prose-h2:font-sans prose-h2:text-xl lg:prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 lg:prose-h2:mt-12" dangerouslySetInnerHTML={{ __html: content }} />
                         ) : (
-                          <div className="h-full flex flex-col items-center justify-center opacity-10 text-center"><Edit3 className="w-16 h-16 lg:w-20 lg:h-20 stroke-[0.5px] mb-6" /><p className="text-lg font-bold">Editor Vacío</p></div>
+                          <div className="h-full flex flex-col items-center justify-center opacity-10 text-center uppercase tracking-widest py-20"><Edit3 className="w-16 h-16 lg:w-20 lg:h-20 stroke-[0.5px] mb-6" /><p className="text-[10px] font-bold">Editor Vacío</p></div>
                         )}
                       </AnimatePresence>
                    </div>
